@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-claim
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: efs-pvc-deploy
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: efs-pvc-deploy
+  template:
+    metadata:
+      labels:
+        app: efs-pvc-deploy
+    spec:
+      containers:
+      - name: app
+        image: centos
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do echo $(date -u) >> /data/out; sleep 5; done"]
+        volumeMounts:
+          - name: persistent-storage
+            mountPath: /home/ec2-user/efsstorage
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: efs-claim
